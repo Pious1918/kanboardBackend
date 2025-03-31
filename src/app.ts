@@ -16,8 +16,12 @@ const app = express()
 const morganFormat = ":method :url :status :response-time ms";
 
 app.use(cors({
-    origin: 'http://localhost:4200',
+    origin: 'https://kanbanboard-frontend-psi.vercel.app',
 }))
+
+// app.use(cors({
+//     origin: 'http://localhost:4200',
+// }))
 
 app.use(express.json());
 app.use(
