@@ -6,6 +6,7 @@ import userModel from "../models/userModel";
 
 
 console.log("secreet",process.env.JWT_SECRET as string)
+
 const options : StrategyOptions ={
     jwtFromRequest:ExtractJwt.fromAuthHeaderAsBearerToken(),
     secretOrKey: process.env.JWT_SECRET as string
@@ -30,8 +31,7 @@ passport.use( new JwtStrategy(options , async(jwt_payload , done)=>{
         if(user){
             return done(null , user)
         }
-
-
+        
         console.log("no token")
         return done(null ,false)
 

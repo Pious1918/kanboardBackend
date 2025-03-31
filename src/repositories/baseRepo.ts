@@ -14,7 +14,7 @@ export class BaseRepository<T extends Document> {
     }
 
     async find(filter?: Partial<T> | undefined): Promise<T[]> {
-        return this._model.find()
+        return this._model.find(filter || {})
     }
 
 

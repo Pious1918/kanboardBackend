@@ -4,6 +4,7 @@ import { userService } from "../services/userservice";
 import { StatusCode } from "../enums/statuscode.enums";
 import { generateToken } from "../utils/jwtHelper";
 import { Itaskdata } from "../interfaces/task.interface";
+import { generatepresigned } from "../utils/genPresigned";
 
 
 
@@ -31,14 +32,14 @@ export class userController {
             const result = await this._userservice.registerUser(userData)
 
             if (result?.success) {
-                res.status(200).json({ success: true, message: result.message, data: result.data })
+                res.status(StatusCode.OK).json({ success: true, message: result.message, data: result.data })
             } else {
 
-                res.status(400).json({ success: false, message: result?.message })
+                res.status(StatusCode.BadRequest).json({ success: false, message: result?.message })
             }
         } catch (error) {
             console.error("Error registering the user:", error);
-            res.status(500).json({ success: false, message: "Internal Server Error" });
+            res.status(StatusCode.InternalServerError).json({ success: false, message: "Internal Server Error" });
         }
     }
 
@@ -69,16 +70,75 @@ export class userController {
     }
 
 
+    public getUserProfile = async (req: Request, res: Response) => {
+        try {
+            const user = req.user as { _id: string; name: string; email: string };
+            const userId = user._id;
+
+            const userprofile = await this._userservice.getUser(userId)
+            console.log("userprofile @ controller", userprofile)
+            res.status(StatusCode.OK).json({ message: userprofile.message, userdata: userprofile.user });
+        } catch (error) {
+            console.error("Error fetching user:", error);
+            res.status(StatusCode.InternalServerError).json({ message: "Internal Server Error" });
+        }
+    };
+
+    public updateName = async (req: Request, res: Response) => {
+        try {
+            const user = req.user as { _id: string; name: string; email: string };
+            const userId = user._id;
+
+            const newName = req.body.name;
+            const updatedName = await this._userservice.updateName(userId, newName);
+
+            if (!updatedName) {
+                res.status(StatusCode.NotFound).json({ message: "User not found or name update failed" });
+                return
+            }
+
+            res.status(StatusCode.OK).json({ message: "Name updated successfully", name: updatedName });
+            return
+        } catch (error) {
+            console.error("Error updating name:", error);
+            res.status(StatusCode.InternalServerError).json({ message: "Internal Server Error" });
+        }
+    }
+
+    public updateImage = async (req: Request, res: Response) => {
+        try {
+            const user = req.user as { _id: string; name: string; email: string };
+            const userId = user._id;
+            const newImage = req.body.s3url;
+
+
+            const updatedImage = await this._userservice.updatenewImage(userId, newImage);
+
+            if (!updatedImage) {
+                res.status(StatusCode.NotFound).json({ message: "User not found or name update failed" });
+                return
+            }
+
+            res.status(StatusCode.OK).json({ message: "Image updated successfully", profilepic: updatedImage });
+            return
+        } catch (error) {
+            console.error("Error updating image:", error);
+            res.status(StatusCode.InternalServerError).json({ message: "Internal Server Error" });
+        }
+    }
+
+
+
     public getAlltasks = async (req: Request, res: Response) => {
         try {
 
             const user = req.user as { _id: string; name: string; email: string };
             const userid = user._id
             const alltasks = await this._userservice.getUsertasks(userid)
-
             res.status(StatusCode.OK).json({ alltasks })
         } catch (error) {
-
+            console.error("Error @ getAlltasks:", error);
+            res.status(StatusCode.InternalServerError).json({ message: "Internal Server Error" });
         }
     }
 
@@ -102,7 +162,8 @@ export class userController {
             const result = await this._userservice.addtask(taskdata)
             res.status(StatusCode.OK).json({ message: result?.message, task: result.task })
         } catch (error) {
-
+            console.error("Error @ addTask:", error);
+            res.status(StatusCode.InternalServerError).json({ message: "Internal Server Error" });
         }
     }
 
@@ -122,56 +183,70 @@ export class userController {
             const updatedTask = await this._userservice.updateTaskStatus(taskId, userId, status);
 
             if (!updatedTask) {
-                 res.status(404).json({ message: "Task not found or unauthorized" });
-                 return
+                res.status(StatusCode.NotFound).json({ message: "Task not found or unauthorized" });
+                return
             }
 
-             res.status(200).json({ message: "Task status updated successfully", task: updatedTask });
-             return
+            res.status(StatusCode.OK).json({ message: "Task status updated successfully", task: updatedTask });
+            return
         } catch (error) {
             console.error("Error updating task status:", error);
-             res.status(500).json({ message: "Internal Server Error" });
+            res.status(StatusCode.InternalServerError).json({ message: "Internal Server Error" });
         }
     }
+
 
 
     public deleteTask = async (req: Request, res: Response) => {
         try {
             const taskId = req.params.taskId;
-            console.log("task", taskId)
             const user = req.user as { _id: string; name: string; email: string };
-            const userId = user._id;            
+            const userId = user._id;
+
             const deletedTask = await this._userservice.deleteTask(taskId, userId);
 
             if (!deletedTask) {
-                 res.status(404).json({ message: 'Task not found or unauthorized' });
+                res.status(StatusCode.NotFound).json({ message: 'Task not found or unauthorized' });
             }
 
-             res.status(200).json({ message: 'Task deleted successfully' });
+            res.status(StatusCode.OK).json({ message: 'Task deleted successfully' });
         } catch (error) {
             console.error('Error deleting task:', error);
-             res.status(500).json({ message: 'Internal Server Error' });
+            res.status(StatusCode.InternalServerError).json({ message: 'Internal Server Error' });
         }
     };
 
 
-    public updateTask  = async (req: Request, res: Response) => {
+    public updateTask = async (req: Request, res: Response) => {
         try {
             const taskId = req.params.id;
             const updatedData = req.body;
-        
-            console.log("@cont",updatedData)
 
             const updatedTask = await this._userservice.updateTask(taskId, updatedData);
-        
+
             if (!updatedTask) {
-               res.status(404).json({ message: "Task not found" });
+                res.status(StatusCode.NotFound).json({ message: "Task not found" });
             }
-        
-            res.json({ message: "Task updated successfully", task: updatedTask });
-          } catch (error) {
+
+            res.status(StatusCode.OK).json({ message: "Task updated successfully", task: updatedTask });
+        } catch (error) {
             console.error("Error updating task:", error);
             res.status(500).json({ message: "Internal Server Error" });
-          }
+        }
     };
+
+
+
+
+
+    public genPresignedURL = async (req: Request, res: Response) => {
+        const { fileName, fileType } = req.body
+        try {
+            const presignedURL = await generatepresigned(fileName, fileType)
+            res.json({ presignedURL })
+        } catch (error) {
+            console.error("Error in presignedurl:", error);
+            res.status(StatusCode.InternalServerError).json({ message: "An error occurred" });
+        }
+    }
 }

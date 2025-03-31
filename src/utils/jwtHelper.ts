@@ -8,8 +8,13 @@ export const generateToken = (payload: IusePayload, expiresIn: SignOptions["expi
         throw new Error("Secret is not defined in the .env file");
     }
 
-    return jwt.sign(payload, secret, { expiresIn }); // Now TypeScript will recognize expiresIn correctly.
+    return jwt.sign(payload, secret, { expiresIn }); 
 };
+
+
+
+
+
 
 
 export const verifyToken = (token:string):IusePayload=>{

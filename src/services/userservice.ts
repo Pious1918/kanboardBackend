@@ -43,13 +43,11 @@ export class userService {
             const existingUser: any = await this._userrepository.findbyEmail(logindata.email)
 
             if (!existingUser) {
-                console.log("invalid email")
                 return { success: false, message: 'Invalid email' }
             }
 
             const validpassword = await bcrypt.compare(logindata.password, existingUser.password)
             if (!validpassword) {
-                console.log("invalid password")
                 return { success: false, message: "Invalid Password" }
             }
 
@@ -62,9 +60,41 @@ export class userService {
             return { success: true, message: "Login Successfull", data: payload }
 
         } catch (error) {
-
+            console.error("Error in loginuser service:", error);
+            throw new Error("Failed to login user");
         }
     }
+
+    async getUser(userid: any) {
+        try {
+
+            const user = await this._userrepository.getUserProfile(userid)
+            return { success: true, message: "User details fetched successfully", user }
+        } catch (error) {
+            console.error("Error in getuser service:", error);
+            throw new Error("Failed to fetch user");
+        }
+    }
+
+    async updateName(userId: string, name: string) {
+        try {
+            return await this._userrepository.updateName(userId, name);
+        } catch (error) {
+            console.error("Error updating name:", error);
+            throw new Error("Failed to update name");
+        }
+    }
+
+    async updatenewImage(userId: string, imageurl: string) {
+        try {
+            return await this._userrepository.updatenewImage(userId, imageurl);
+        } catch (error) {
+            console.error("Error updating image:", error);
+            throw new Error("Failed to update image");
+        }
+    }
+
+
 
 
     async addtask(taskdata: Itaskdata) {
@@ -90,16 +120,33 @@ export class userService {
         }
     }
 
-     async updateTaskStatus(taskId: string, userId: string, status: string) {
-        return await this._taskrepository.updateStatus(taskId, userId, status);
+
+    async updateTaskStatus(taskId: string, userId: string, status: string) {
+        try {
+            return await this._taskrepository.updateStatus(taskId, userId, status);
+        } catch (error) {
+            console.error("Error updating task status:", error);
+            throw new Error("Failed to update task status");
+        }
     }
+
 
     public async deleteTask(taskId: string, userId: string) {
-        return await this._taskrepository.deleteTask(taskId, userId);
+        try {
+            return await this._taskrepository.deleteTask(taskId, userId);
+        } catch (error) {
+            console.error("Error deleting task:", error);
+            throw new Error("Failed to delete task");
+        }
     }
 
-
-    public async updateTask (taskId:string, updatedData:any) {
-        return await this._taskrepository.updateTask(taskId, updatedData);
+    public async updateTask(taskId: string, updatedData: any) {
+        try {
+            return await this._taskrepository.updateTask(taskId, updatedData);
+        } catch (error) {
+            console.error("Error updating task:", error);
+            throw new Error("Failed to update task");
+        }
     }
+
 }

@@ -29,7 +29,7 @@ export class taskRepository extends BaseRepository<any> {
         return await this.deleteOne({ _id: taskId, creatorId: userId });
     }
 
-    async updateTask(taskId:string, updatedData:any) {
+    async updateTask(taskId: string, updatedData: any) {
         return await this.updateById(taskId, updatedData);
-      }
+    }
 }
